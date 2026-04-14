@@ -54,12 +54,12 @@ function ChatWindow() {
 
     useEffect(() => {
         if (prompt && reply) {
-            setPrevChats(prev => [
-                ...prev,
-                { role: "user", content: prompt },
-                { role: "assistant", content: reply }
-            ]);
-            setPrompt("");
+        setPrevChats(prev => [
+        ...prev,
+        { role: "user", content: prompt },
+        { role: "model", content: reply } 
+    ]);
+        setPrompt("");
         }
     }, [reply]);
 
