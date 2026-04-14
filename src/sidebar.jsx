@@ -1,61 +1,60 @@
 import "./sidebar.css";
 import { useContext, useEffect } from "react";
 import { MyContext } from "./myContext.jsx";
-import { v4 as uuidv4 } from "uuid"; 
+import { v4 as uuidv4 } from "uuid";
 import logo from "./assets/ec-logo.png";
 
 function Sidebar() {
     const { allThreads, setAllThreads, currThreadId, setNewChat, setPrompt, setReply, setCurrThreadId, setPrevChats } = useContext(MyContext);
 
-    // Added a trailing slash to match your app.use("/api/thread", chatRoutes) setup
     const API_URL = "https://easychat-4uo9.onrender.com/api/thread";
 
     const getAllThreads = async () => {
         try {
-            const response = await fetch(API_URL); 
-            // If server is not ready, exit quietly. No error message will be shown.
-            if (!response.ok) return; 
+            const response = await fetch(API_URL);
+            if (!response.ok) return;
 
             const res = await response.json();
-            
+
             if (Array.isArray(res)) {
-                const filteredData = res.map(thread => ({ 
-                    threadId: thread.threadId, 
-                    title: thread.title 
+                const filteredData = res.map(thread => ({
+                    threadId: thread.threadId,
+                    title: thread.title
                 }));
                 setAllThreads(filteredData);
             }
         } catch (err) {
-            // Logs to console for debugging, but keeps the Sidebar UI clean
-            console.log("Syncing with server..."); 
+            console.log("Syncing with server...");
         }
     };
 
     useEffect(() => {
         getAllThreads();
-    }, [currThreadId]);  
+    }, [currThreadId]);
 
     const createNewChat = () => {
         setNewChat(true);
         setPrompt("");
         setReply(null);
-        setCurrThreadId(uuidv4()); 
+        setCurrThreadId(uuidv4());
         setPrevChats([]);
     };
 
     const changeThread = async (newThreadId) => {
-        if(newThreadId === currThreadId) return;
-        
+        if (newThreadId === currThreadId) return;
+
         setCurrThreadId(newThreadId);
-        setPrevChats([]); 
+        setPrevChats([]);
+
         try {
             const response = await fetch(`${API_URL}/${newThreadId}`);
             if (!response.ok) return;
+
+            // Fixed: API returns messages array directly, not { messages: [...] }
             const res = await response.json();
-            
-            setPrevChats(res.messages || res); 
-            setNewChat(false); 
-            setReply(null); 
+            setPrevChats(res);
+            setNewChat(false);
+            setReply(null);
         } catch (err) {
             console.log("Thread switch failed silently.");
         }
@@ -65,10 +64,9 @@ function Sidebar() {
         try {
             const response = await fetch(`${API_URL}/${threadId}`, { method: "DELETE" });
             if (!response.ok) return;
-            
-            // Instantly remove from UI
+
             setAllThreads(prev => prev.filter(thread => thread.threadId !== threadId));
-            
+
             if (threadId === currThreadId) {
                 createNewChat();
             }
@@ -88,18 +86,19 @@ function Sidebar() {
                     <i className="fa-solid fa-pen-to-square"></i>
                 </button>
 
-                {/* The history list renders only when data exists, no error divs here */}
                 <ul className="history">
                     {allThreads?.map((thread) => (
-                        <li key={thread.threadId}
+                        <li
+                            key={thread.threadId}
                             onClick={() => changeThread(thread.threadId)}
                             className={thread.threadId === currThreadId ? "highlighted" : ""}
                         >
                             <i className="fa-regular fa-message message-icon"></i>
                             <span className="title-text">{thread.title}</span>
-                            <i className="fa-solid fa-trash"
+                            <i
+                                className="fa-solid fa-trash"
                                 onClick={(e) => {
-                                    e.stopPropagation(); 
+                                    e.stopPropagation();
                                     deleteThread(thread.threadId);
                                 }}
                             ></i>
@@ -114,5 +113,7 @@ function Sidebar() {
         </section>
     );
 }
+
+export default Sidebar;
 
 export default Sidebar;
